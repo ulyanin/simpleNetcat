@@ -1,6 +1,6 @@
 /*
- * tcpclient.c - A simple TCP client
- * usage: tcpclient <host> <port>
+ * nc.c - A simple TCP client
+ * usage: nc <host> <port>
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +50,7 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
+
     /* build the server's Internet address */
     bzero((char *) &serveraddr, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
@@ -70,7 +71,6 @@ int main(int argc, char **argv) {
             break;
         buf[i] = c;
     }
-    printf("'%s'\n", buf);
     /* send the message line to the server */
     n = write(sockfd, buf, strlen(buf));
     if (n < 0)
