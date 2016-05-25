@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <pthread.h>
 
 
 #define MAX_BUFSIZE 65536
@@ -21,6 +22,27 @@
 void print_error(char *msg) {
     perror(msg);
     exit(0);
+}
+
+void* listen_(void* arg){
+    int sock = *(int*)arg;
+    int n = 0;
+    char buf[MAX_BUFSIZE];
+    bzero(buf, MAX_BUFSIZE);
+    while(1){
+        //printf("_\n");
+        n = read(sock, buf, MAX_BUFSIZE);
+        //printf("%d\n", n);
+        if(n == 0){
+            printf("server sended empty msg, terminating\n");
+            exit(0);
+        }
+        if (n < 0)
+            print_error("ERROR reading from socket");
+        buf[n] = 0;
+        printf("server response:\n%s", buf);
+    }
+    pthread_exit(0);
 }
 
 int main(int argc, char **argv) {
@@ -57,31 +79,34 @@ int main(int argc, char **argv) {
     bcopy((char *)server->h_addr,
             (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     serveraddr.sin_port = htons(portno);
-
+    puts("!");
     /* connect: create a connection with the server */
     if (connect(sockfd, (const struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
         print_error("ERROR connecting");
-
+    puts("!");
     /* get message line from the user */
     int i, c;
-    bzero(buf, MAX_BUFSIZE);
-    for (i = 0; i < MAX_BUFSIZE; ++i) {
-        c = fgetc(stdin);
-        if (c == EOF)
-            break;
-        buf[i] = c;
-    }
-    /* send the message line to the server */
-    n = write(sockfd, buf, strlen(buf));
-    if (n < 0)
-        print_error("ERROR writing to socket");
+    
 
-    /* print the server's reply */
-    bzero(buf, MAX_BUFSIZE);
-    n = read(sockfd, buf, MAX_BUFSIZE);
-    if (n < 0)
-        print_error("ERROR reading from socket");
-    printf("server response:\n%s", buf);
+    pthread_t thread;
+    pthread_create(&thread, NULL, listen_, &sockfd);
+    
+    while(1){
+        bzero(buf, MAX_BUFSIZE);
+        for (i = 0; i < MAX_BUFSIZE - 1; ++i) {
+            c = fgetc(stdin); 
+            buf[i] = c;
+            if (c == '\n')
+                break;
+        }
+        //if(buf[0] == 'q' && buf[1] == 'u' && buf[2] == 'i' && buf[3] == 't') break;
+        /* send the message line to the server */
+        n = write(sockfd, buf, strlen(buf));
+        if (n < 0)
+            print_error("ERROR writing to socket");
+    }
+
     close(sockfd);
+
     return 0;
 }
