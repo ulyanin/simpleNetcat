@@ -79,11 +79,9 @@ int main(int argc, char **argv) {
     bcopy((char *)server->h_addr,
             (char *)&serveraddr.sin_addr.s_addr, server->h_length);
     serveraddr.sin_port = htons(portno);
-    puts("!");
     /* connect: create a connection with the server */
     if (connect(sockfd, (const struct sockaddr *)&serveraddr, sizeof(serveraddr)) < 0)
         print_error("ERROR connecting");
-    puts("!");
     /* get message line from the user */
     int i, c;
     
@@ -99,7 +97,6 @@ int main(int argc, char **argv) {
             if (c == '\n')
                 break;
         }
-        //if(buf[0] == 'q' && buf[1] == 'u' && buf[2] == 'i' && buf[3] == 't') break;
         /* send the message line to the server */
         n = write(sockfd, buf, strlen(buf));
         if (n < 0)
